@@ -1,4 +1,4 @@
-# 🍽️ Sistema de Reconhecimento de Alimentos
+# Sistema de Reconhecimento de Alimentos
 
 [![Versão do Python](https://img.shields.io/badge/python-3.9%2B-blue.svg)](https://www.python.org/)
 [![Versão do TensorFlow](https://img.shields.io/badge/tensorflow-2.10%2B-orange.svg)](https://www.tensorflow.org/)
@@ -8,7 +8,7 @@ Um sistema avançado de reconhecimento de alimentos que identifica diferentes ti
 
 ![Demonstração da Detecção de Alimentos](SCR-20250624-rsyw.png)
 
-## ✨ Funcionalidades
+## Funcionalidades
 
 -   **Segmentação de Alimentos**: Isola os itens alimentares do fundo da imagem usando processamento avançado de imagem.
 -   **Detecção de Prato**: Identifica automaticamente o prato na imagem para focar na área relevante.
@@ -17,7 +17,7 @@ Um sistema avançado de reconhecimento de alimentos que identifica diferentes ti
 -   **Interface Web**: Uma interface web simples para fazer upload de uma imagem e obter as predições.
 -   **Análise Detalhada de Métricas**: Um conjunto completo de ferramentas para avaliar o desempenho do modelo, incluindo matriz de confusão, curvas ROC e relatórios detalhados.
 
-## 🛠️ Tecnologias Utilizadas
+## Tecnologias Utilizadas
 
 -   **Backend**: Python, Flask
 -   **Machine Learning**: TensorFlow, Keras, Scikit-learn
@@ -25,7 +25,7 @@ Um sistema avançado de reconhecimento de alimentos que identifica diferentes ti
 -   **Frontend**: HTML, CSS (via templates)
 -   **Visualização de Dados**: Matplotlib, Seaborn
 
-## 🚀 Começando
+## Começando
 
 ### Pré-requisitos
 
@@ -82,7 +82,7 @@ python food_detector_web.py
 
 Abra seu navegador e acesse `http://127.0.0.1:5000` para usar a aplicação.
 
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 .
@@ -101,7 +101,7 @@ Abra seu navegador e acesse `http://127.0.0.1:5000` para usar a aplicação.
 └── README.md                # Este arquivo
 ```
 
-## 📈 Desempenho do Modelo
+## Desempenho do Modelo
 
 O modelo alcança alta acurácia na classificação de itens alimentares. Uma análise de desempenho detalhada é gerada automaticamente após o treinamento, incluindo:
 
@@ -112,7 +112,7 @@ O modelo alcança alta acurácia na classificação de itens alimentares. Uma an
 
 Todos esses relatórios são salvos no diretório `metricas_diagnostico` após a execução do script de treinamento.
 
-## 🤝 Contribuindo
+## Contribuindo
 
 Contribuições são bem-vindas! Sinta-se à vontade para enviar um pull request.
 
@@ -122,6 +122,6 @@ Contribuições são bem-vindas! Sinta-se à vontade para enviar um pull request
 4.  Faça push para a branch (`git push origin feature/AmazingFeature`).
 5.  Abra um pull request.
 
-## 📜 Licença
+## Licença
 
 Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para mais detalhes. 
