@@ -1,0 +1,23 @@
+# Environments
+.venv/
+__pycache__/
+
+# Datasets and Uploads
+Imagens_um_Alimento/
+Imagens_Varios_Alimentos/
+uploads/
+bounding_box/
+
+# Outputs
+detection_output_*/
+metricas_diagnostico/
+
+# Models
+*.h5
+
+# OS-specific
+.DS_Store
+
+# IDE-specific
+.idea/
+.vscode/ 

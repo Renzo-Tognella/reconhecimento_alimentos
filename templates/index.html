@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detector de Alimentos Avançado</title>
+    <!-- Tailwind CSS para um design moderno e responsivo -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Estilos personalizados para melhorar a UI */
+        body { font-family: 'Inter', sans-serif; }
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        /* Ajuste para altura da lista de classes */
+        #available-classes-list {
+            max-height: calc(100vh - 350px);
+        }
+    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="app" class="container mx-auto p-4">
+
+        <!-- Cabeçalho -->
+        <header class="bg-blue-600 text-white p-6 rounded-lg shadow-lg mb-6">
+            <h1 class="text-3xl font-bold">Detector de Alimentos Avançado</h1>
+            <p class="mt-1 text-blue-200">Faça o upload de uma imagem ou selecione um exemplo para começar</p>
+        </header>
+
+        <main class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+            <!-- Coluna de Controlo (Esquerda) -->
+            <div class="lg:col-span-3 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2">Controlos</h2>
+                
+                <!-- Upload de Ficheiro -->
+                <input type="file" id="file-input" class="hidden" accept="image/jpeg, image/png">
+                <button onclick="document.getElementById('file-input').click()" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                    Upload de Imagem
+                </button>
+
+                <div class="my-4 text-center text-gray-500">ou</div>
+
+                <!-- Lista de Classes Disponíveis -->
+                <h3 class="text-lg font-semibold mb-2">Selecionar Exemplo</h3>
+                <div id="available-classes-list" class="overflow-y-auto border rounded-md p-2 bg-gray-50">
+                    <!-- As classes serão carregadas aqui pelo JavaScript -->
+                    <p id="classes-loading">A carregar classes...</p>
+                </div>
+
+                <!-- Botão de Deteção -->
+                <button id="run-detection-btn" onclick="runDetection()" class="w-full mt-6 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-md transition-colors shadow-md" disabled>
+                    Executar Deteção
+                </button>
+            </div>
+
+            <!-- Coluna de Visualização (Centro) -->
+            <div class="lg:col-span-5 bg-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center min-h-[400px]">
+                <div id="image-display" class="w-full h-full flex items-center justify-center">
+                    <p class="text-gray-400">Nenhuma imagem selecionada</p>
+                </div>
+                <div id="loader-display" class="hidden flex-col items-center justify-center">
+                    <div class="loader"></div>
+                    <p class="mt-4 text-lg font-semibold text-gray-600">A processar...</p>
+                </div>
+            </div>
+
+            <!-- Coluna de Resultados (Direita) -->
+            <div class="lg:col-span-4 bg-white p-6 rounded-lg shadow-md">
+                <h2 class="text-xl font-bold mb-4 border-b pb-2">Resultados da Deteção</h2>
+                <div id="results-list">
+                    <p class="text-gray-500">Os resultados aparecerão aqui.</p>
+                </div>
+                <button id="clear-results-btn" onclick="clearResults()" class="w-full mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded-md transition-colors hidden">
+                    Limpar Resultados
+                </button>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        // --- ESTADO DA APLICAÇÃO ---
+        let currentFilepath = null;
+
+        // --- ELEMENTOS DO DOM ---
+        const fileInput = document.getElementById('file-input');
+        const runBtn = document.getElementById('run-detection-btn');
+        const imageDisplay = document.getElementById('image-display');
+        const loaderDisplay = document.getElementById('loader-display');
+        const resultsList = document.getElementById('results-list');
+        const clearBtn = document.getElementById('clear-results-btn');
+        const classesListDiv = document.getElementById('available-classes-list');
+        const classesLoading = document.getElementById('classes-loading');
+
+        // --- FUNÇÕES DA API ---
+
+        /** Carrega as classes disponíveis do servidor e preenche a lista. */
+        async function loadClasses() {
+            try {
+                const response = await fetch('/api/classes');
+                if (!response.ok) throw new Error('Falha ao carregar classes');
+                const classes = await response.json();
+                
+                classesLoading.style.display = 'none';
+                classesListDiv.innerHTML = ''; // Limpa a lista
+
+                classes.forEach(cls => {
+                    const btn = document.createElement('button');
+                    btn.className = 'w-full text-left p-2 mb-1 rounded-md hover:bg-blue-100 transition-colors';
+                    btn.textContent = `${cls.name} (${cls.count} imagens)`;
+                    btn.onclick = () => selectClass(cls.name);
+                    classesListDiv.appendChild(btn);
+                });
+            } catch (error) {
+                console.error('Erro:', error);
+                classesLoading.textContent = 'Erro ao carregar classes.';
+            }
+        }
+
+        /** Lida com o upload de um ficheiro pelo utilizador. */
+        async function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            showLoader('A carregar imagem...');
+            try {
+                // Para o upload, precisamos usar a rota /api/upload que você tinha
+                const tempPath = await uploadFileAndGetPath(file);
+                if (tempPath) {
+                    currentFilepath = tempPath;
+                    displayImageFromFile(file); // Mostra a imagem localmente para uma resposta mais rápida
+                    runBtn.disabled = false;
+                }
+            } catch (error) {
+                console.error("Erro no upload:", error);
+                alert('Falha no upload do ficheiro.');
+                showImageDisplay();
+            }
+        }
+        
+        /** Função auxiliar para fazer o upload e obter o caminho do servidor */
+        async function uploadFileAndGetPath(file) {
+             const formData = new FormData();
+             formData.append('file', file);
+             const response = await fetch('/api/upload', { method: 'POST', body: formData });
+             const data = await response.json();
+             if (data.success) {
+                 return data.filepath;
+             }
+             throw new Error(data.error || 'Upload failed');
+        }
+
+        /** Seleciona uma imagem de exemplo de uma classe. */
+        async function selectClass(className) {
+            showLoader('A carregar exemplo...');
+            try {
+                const response = await fetch('/api/select_from_class', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ class_name: className })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    currentFilepath = data.filepath;
+                    displayImageFromBase64(data.image_data);
+                    runBtn.disabled = false;
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Erro ao selecionar classe:', error);
+                alert(`Não foi possível carregar a imagem da classe ${className}.`);
+                showImageDisplay();
+            }
+        }
+
+        /** Executa o processo de deteção. */
+        async function runDetection() {
+            if (!currentFilepath) {
+                alert('Por favor, selecione uma imagem primeiro.');
+                return;
+            }
+
+            showLoader('A executar deteção...');
+            resultsList.innerHTML = '<p class="text-gray-500">A processar...</p>';
+            clearBtn.classList.add('hidden');
+
+            try {
+                const response = await fetch('/api/detect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image_path: currentFilepath })
+                });
+                
+                const data = await response.json();
+
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Ocorreu um erro no servidor');
+                }
+                
+                // *** ESTA É A PARTE CRUCIAL ***
+                // Atualiza a imagem com o resultado da deteção
+                if (data.result_image_data) {
+                    displayImageFromBase64(data.result_image_data);
+                }
+
+                // Atualiza a lista de resultados de texto
+                updateResultsList(data.detected_foods);
+
+            } catch (error) {
+                console.error('Erro na deteção:', error);
+                resultsList.innerHTML = `<p class="text-red-500 font-semibold">Erro: ${error.message}</p>`;
+                showImageDisplay(); // Volta a mostrar a imagem se houver erro
+            }
+        }
+
+        // --- FUNÇÕES DE UI ---
+
+        /** Mostra o ecrã de carregamento. */
+        function showLoader(message) {
+            imageDisplay.classList.add('hidden');
+            loaderDisplay.classList.remove('hidden');
+            loaderDisplay.querySelector('p').textContent = message;
+        }
+
+        /** Mostra o ecrã de exibição de imagem. */
+        function showImageDisplay() {
+            loaderDisplay.classList.add('hidden');
+            imageDisplay.classList.remove('hidden');
+        }
+
+        /** Mostra uma imagem a partir de um objeto File. */
+        function displayImageFromFile(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                imageDisplay.innerHTML = `<img src="${e.target.result}" alt="Imagem selecionada" class="max-w-full max-h-[500px] rounded-md shadow-sm">`;
+                showImageDisplay();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        /** Mostra uma imagem a partir de uma string base64. */
+        function displayImageFromBase64(base64Data) {
+            const imgSrc = `data:image/jpeg;base64,${base64Data}`;
+            imageDisplay.innerHTML = `<img src="${imgSrc}" alt="Resultado da deteção" class="max-w-full max-h-[500px] rounded-md shadow-sm">`;
+            showImageDisplay();
+        }
+
+        /** Atualiza a lista de resultados de deteção. */
+        function updateResultsList(foods) {
+            if (!foods || foods.length === 0) {
+                resultsList.innerHTML = '<p class="text-gray-500">Nenhum alimento foi detetado.</p>';
+                return;
+            }
+
+            let html = `<p class="font-semibold mb-2">Total de alimentos encontrados: ${foods.length}</p>`;
+            html += '<ul class="space-y-2">';
+            foods.forEach(food => {
+                const confidence = (food.confidence * 100).toFixed(1);
+                html += `
+                    <li class="p-2 border rounded-md bg-gray-50">
+                        <span class="font-bold text-blue-700">${food.name}</span><br>
+                        <span class="text-sm text-gray-600">Confiança: ${confidence}%</span>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            resultsList.innerHTML = html;
+            clearBtn.classList.remove('hidden');
+        }
+
+        /** Limpa os resultados e a imagem. */
+        function clearResults() {
+            currentFilepath = null;
+            runBtn.disabled = true;
+            imageDisplay.innerHTML = '<p class="text-gray-400">Nenhuma imagem selecionada</p>';
+            resultsList.innerHTML = '<p class="text-gray-500">Os resultados aparecerão aqui.</p>';
+            clearBtn.classList.add('hidden');
+            fileInput.value = ''; // Limpa o input do ficheiro
+        }
+
+        // --- INICIALIZAÇÃO ---
+        document.addEventListener('DOMContentLoaded', () => {
+            loadClasses();
+            fileInput.addEventListener('change', handleFileUpload);
+        });
+
+    </script>
+</body>
+</html>

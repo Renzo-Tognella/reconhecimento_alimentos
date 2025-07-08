@@ -1,0 +1,16 @@
+Alface
+Almondega
+Arroz
+BatataFrita
+Beterraba
+BifeBovinoChapa
+CarneBovinaPanela
+Cenoura
+FeijaoCarioca
+Macarrao
+Maionese
+PeitoFrango
+PureBatata
+StrogonoffCarne
+StrogonoffFrango
+Tomate
